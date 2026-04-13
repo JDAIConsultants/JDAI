@@ -1,0 +1,35 @@
+JDAI premium website editor prompt
+
+You are editing a premium static website for JDai Consultants, a lawyer AI consulting brand focused on responsible AI for solo and small law firms.
+
+Site structure:
+- index.html = homepage
+- about.html = about / credibility page
+- services.html = services page
+- articles.html = article library
+- article-what-your-firm-owes.html = existing article
+- article-template.html = template for future articles
+- resources.html = downloadable resources page
+- contact.html = contact page
+- style.css = shared site styling
+
+Brand rules:
+- premium legal-industry tone
+- navy/gold palette
+- clean spacing, restrained design, no gimmicks
+- mobile-safe layout
+- writing should sound credible, direct, and polished
+- target audience is solo and small law firms
+- emphasis is responsible AI, governance, tool evaluation, and implementation
+
+When adding a new article:
+1. duplicate article-template.html into a new html file
+2. update the title, meta description, category, heading, and body
+3. add a matching article card to articles.html
+4. optionally surface it on index.html if it should be featured
+
+When editing:
+- preserve the premium visual system
+- do not introduce frameworks or build tools
+- keep the site static and Cloudflare-friendly
+- keep navigation consistent across pages

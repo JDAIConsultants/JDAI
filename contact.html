@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact | JDAI Consultants</title>
+  <meta name="description" content="Contact JDAI Consultants about responsible AI consulting for solo and small law firms." />
+  <meta name="theme-color" content="#0b0f1a" />
+  <link rel="canonical" href="https://jdaiconsultants.com/contact.html" />
+  <style>
+    :root{
+      --navy-bg:#0b0f1a;
+      --navy-mid:#121828;
+      --navy-card:#161d2e;
+      --gold:#c9a84c;
+      --gold-light:#e8c97a;
+      --text-primary:#e8e4dc;
+      --text-muted:#b8c8dc;
+      --text-dim:#7f91ad;
+      --border:#1e2a40;
+      --off-white:#f5f1ea;
+      --shadow:0 16px 42px rgba(0,0,0,.28);
+      --radius:18px;
+      --max:1180px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(201,168,76,.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(58,110,168,.10), transparent 24%),
+        linear-gradient(180deg, var(--navy-mid) 0%, var(--navy-bg) 40%, #090d16 100%);
+      color:var(--text-primary);
+      line-height:1.62;
+      overflow-x:hidden;
+    }
+
+    a{color:inherit;text-decoration:none}
+    h1,h2,h3,p{margin:0 0 1rem}
+    .container{width:min(100% - 32px, var(--max));margin:0 auto}
+    .gold{color:var(--gold)}
+
+    .site-header{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter:blur(14px);
+      background:rgba(11,15,26,.76);
+      border-bottom:1px solid rgba(30,42,64,.86)
+    }
+
+    .nav{
+      min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px
+    }
+
+    .brand{font-size:1.25rem;font-weight:800;letter-spacing:.02em;white-space:nowrap}
+    .nav-links{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:flex-end}
+    .nav-links a{color:var(--text-muted);font-size:.98rem}
+    .nav-links a:hover,.nav-links a.active{color:var(--off-white)}
+
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      min-height:48px;padding:0 18px;border-radius:999px;border:1px solid transparent;
+      font-weight:700;font-size:.98rem;transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease;
+      white-space:nowrap
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(180deg,var(--gold-light),var(--gold));color:#111;box-shadow:0 10px 30px rgba(201,168,76,.22)}
+    .btn-secondary{background:rgba(255,255,255,.02);border-color:var(--border);color:var(--off-white)}
+
+    .hero{padding:40px 0 24px}
+    .hero-card,.card{
+      background:linear-gradient(180deg, rgba(22,29,46,.97), rgba(16,22,36,.96));
+      border:1px solid var(--border);border-radius:24px;padding:28px;box-shadow:var(--shadow)
+    }
+
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:10px;margin-bottom:16px;padding:8px 12px;border:1px solid rgba(201,168,76,.24);
+      border-radius:999px;color:var(--gold-light);background:rgba(201,168,76,.06);font-size:.86rem;font-weight:700;letter-spacing:.02em
+    }
+
+    h1{
+      font-size:clamp(2.2rem,5vw,4rem);
+      letter-spacing:-.03em;
+      line-height:1.05;
+      max-width:11ch;
+      text-wrap:balance;
+    }
+
+    .lead{
+      color:var(--text-muted);
+      font-size:clamp(1.02rem, 1.8vw, 1.14rem);
+      max-width:62ch;
+    }
+
+    .hero-actions,.stack-actions{
+      display:flex;gap:14px;flex-wrap:wrap;margin-top:22px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:22px;
+      margin-top:22px;
+    }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:14px;
+      margin-top:24px;
+    }
+
+    .mini{
+      border:1px solid rgba(30,42,64,.95);
+      border-radius:16px;
+      padding:16px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .mini strong{
+      display:block;
+      color:var(--off-white);
+      margin-bottom:4px;
+      font-size:1rem;
+    }
+
+    .mini span{
+      color:var(--text-dim);
+      font-size:.92rem;
+    }
+
+    .section{padding:20px 0 40px}
+    .grid{
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:22px;
+      align-items:start;
+    }
+
+    .kicker{
+      color:var(--gold-light);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-size:.78rem;
+      margin-bottom:10px;
+      display:block;
+    }
+
+    .copy p{color:var(--text-muted);max-width:70ch}
+    .trust-list,.fit-list{
+      list-style:none;
+      margin:18px 0 0;
+      padding:0;
+      display:grid;
+      gap:12px;
+    }
+
+    .trust-list li,.fit-list li{
+      padding:14px 16px;
+      border:1px solid rgba(30,42,64,.95);
+      border-radius:14px;
+      background:rgba(255,255,255,.02);
+      color:var(--text-muted);
+    }
+
+    .fit-box{
+      margin-top:18px;
+      padding:18px;
+      border-radius:18px;
+      border:1px solid rgba(201,168,76,.22);
+      background:linear-gradient(180deg, rgba(201,168,76,.08), rgba(201,168,76,.03));
+    }
+
+    .fit-box h3{margin-bottom:10px}
+
+    form{
+      display:grid;
+      gap:14px;
+      margin-top:6px;
+    }
+
+    .field{display:grid;gap:8px}
+    label{font-weight:650;color:var(--off-white)}
+    input,select,textarea{
+      width:100%;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#0f1422;
+      color:var(--off-white);
+      font:inherit;
+    }
+
+    textarea{min-height:170px;resize:vertical}
+
+    .form-note{
+      color:var(--text-dim);
+      font-size:.92rem;
+      margin-top:4px;
+    }
+
+    .alt-contact{
+      margin-top:18px;
+      padding-top:18px;
+      border-top:1px solid var(--border);
+      color:var(--text-muted);
+    }
+
+    .site-footer{padding:24px 0 46px;color:var(--text-dim)}
+    .footer-card{
+      border-top:1px solid var(--border);
+      padding-top:20px;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 980px){
+      .hero-grid,.grid,.mini-grid{grid-template-columns:1fr}
+      h1{max-width:none}
+    }
+
+    @media (max-width: 720px){
+      .site-header{position:static}
+      .nav{min-height:auto;padding:14px 0;align-items:flex-start;flex-direction:column}
+      .nav-links{width:100%;justify-content:flex-start;gap:12px 16px}
+      .hero{padding:24px 0 16px}
+      .hero-card,.card{padding:20px;border-radius:20px}
+      .hero-actions,.stack-actions{flex-direction:column;align-items:stretch}
+      .hero-actions .btn,.stack-actions .btn{width:100%}
+      h1{font-size:clamp(2rem, 9vw, 2.85rem)}
+    }
+
+    @media (max-width: 420px){
+      .container{width:min(100% - 20px, var(--max))}
+      .brand{font-size:1.1rem}
+      .eyebrow{font-size:.8rem;width:100%;justify-content:center;text-align:center}
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="brand">JD<span class="gold">AI</span> Consultants</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="articles.html">Articles</a>
+        <a href="resources.html">Resources</a>
+        <a class="active" href="contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-card">
+          <div class="eyebrow">Consulting inquiries • responsible AI • small law firms</div>
+          <h1>Start the conversation with confidence.</h1>
+          <p class="lead">
+            JDAI works with solo and small law firms that want AI implementation to be useful, measured, and credible. If you are evaluating tools, building governance, or trying to decide what AI should and should not do inside your firm, this is the right place to reach out.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#inquiry-form">Send an Inquiry</a>
+            <a class="btn btn-secondary" href="/cdn-cgi/l/email-protection#17736d7e64647a7679577d73767e74787964627b63767963643974787a286462757d7274632a5d53565e32252754787964627b6376637e787932252745726662726463">Email Directly</a>
+          </div>
+
+          <div class="mini-grid">
+            <div class="mini">
+              <strong>Practical</strong>
+              <span>Built for real firms, not theoretical compliance exercises.</span>
+            </div>
+            <div class="mini">
+              <strong>Targeted</strong>
+              <span>Focused on solo and small law firm realities.</span>
+            </div>
+            <div class="mini">
+              <strong>Credible</strong>
+              <span>Structured around responsible adoption and client trust.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container grid">
+        <div class="card copy">
+          <span class="kicker">Best fit</span>
+          <h2>When to reach out</h2>
+          <p>
+            The strongest inquiries usually come from firms that know they want to use AI more intentionally but do not want to rely on guesswork, vendor marketing, or informal internal habits.
+          </p>
+
+          <ul class="trust-list">
+            <li><strong>You need help evaluating a tool.</strong> You want to understand retention, training use, confidentiality posture, and whether the product actually fits your workflow.</li>
+            <li><strong>You need governance structure.</strong> You want practical guardrails for what can be entered, how outputs are reviewed, and how staff should use AI day to day.</li>
+            <li><strong>You want implementation guidance.</strong> You are trying to decide where AI helps, where it should be limited, and how to roll it out without damaging trust.</li>
+          </ul>
+
+          <div class="fit-box">
+            <h3>Best-fit clients</h3>
+            <ul class="fit-list">
+              <li>Solo attorneys and small firms exploring responsible AI adoption</li>
+              <li>Legal teams comparing multiple AI tools before committing</li>
+              <li>Organizations seeking training, speaking, or governance guidance</li>
+            </ul>
+          </div>
+
+          <div class="stack-actions">
+            <a class="btn btn-secondary" href="services.html">View Services</a>
+            <a class="btn btn-secondary" href="articles.html">Read Articles</a>
+          </div>
+        </div>
+
+        <div class="card" id="inquiry-form">
+          <span class="kicker">Inquiry form</span>
+          <h2>Tell JDAI what you need.</h2>
+          <p class="lead" style="margin-bottom:18px;">
+            Keep your current Formspree endpoint. Replace only the visual structure below if you want the page to feel more premium.
+          </p>
+
+          <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" placeholder="Your name" required />
+            </div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" placeholder="name@firm.com" required />
+            </div>
+
+            <div class="field">
+              <label for="firm">Firm / Organization</label>
+              <input id="firm" name="firm" type="text" placeholder="Firm or organization name" />
+            </div>
+
+            <div class="field">
+              <label for="need">Primary Need</label>
+              <select id="need" name="primary_need" required>
+                <option value="">Select one</option>
+                <option>AI Tool Evaluation</option>
+                <option>Governance / Policy Design</option>
+                <option>Implementation Strategy</option>
+                <option>Training / Speaking</option>
+                <option>General Inquiry</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="message">How can JDAI help?</label>
+              <textarea id="message" name="message" placeholder="Briefly describe your current AI questions, goals, or concerns." required></textarea>
+            </div>
+
+            <input type="hidden" name="_subject" value="New JDAI website inquiry" />
+
+            <button class="btn btn-primary" type="submit">Send Inquiry</button>
+          </form>
+
+          <p class="form-note">
+            Replace <strong>YOUR_FORM_ID</strong> with your current live Formspree endpoint if you use this file directly.
+          </p>
+
+          <div class="alt-contact">
+            Prefer email? Contact <a href="/cdn-cgi/l/email-protection#92f6e8fbe1e1fff3fcd2f8f6f3fbf1fdfce1e7fee6f3fce6e1bcf1fdff"><span class="__cf_email__" data-cfemail="fa9e80938989979b94ba909e9b93999594898f968e9b948e89d4999597">[email&#160;protected]</span></a>.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer cl

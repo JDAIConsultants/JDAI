@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#0b0f1a"/>
+<meta name="description" content="AI Readiness Assessment for Law Firms — JDAI Consultants. Evaluate your firm's AI tools, governance posture, and compliance in under 5 minutes."/>
+<title>AI Readiness Assessment — JDAI Consultants</title>
+<style>body{margin:0;background:#0b0f1a}*{box-sizing:border-box}</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<noscript>This assessment requires JavaScript to run.</noscript>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+// React hooks available via global
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xpqopybk";
+
+// BOOK_MODE: false = JDAI Consultants branding
+//            true  = Book-branded (flip when Responsible AI is published)
+const BOOK_MODE = false;
+
+const BRAND = BOOK_MODE ? {
+  name:   "Responsible AI for the Small Law Firm",
+  sub:    "AI Readiness Assessment · Powered by the Four-Factor Framework",
+  cta:    "JDAI Consultants, LLC — AI Governance Advisory for Small Law Firms",
+  ctaSub: "David Zissman, J.D., M.B.A. · Author · Legal AI Advisor",
+  footer: "This assessment is powered by the four-factor evaluation framework from Responsible AI for the Small Law Firm (Zissman, 2026). It identifies areas of potential risk and is designed to start — not replace — a conversation with a qualified legal AI advisor. Results are not legal advice.",
+} : {
+  name:   "JDAI Consultants",
+  sub:    "AI Readiness Assessment for Law Firms",
+  cta:    "JDAI Consultants, LLC — AI Governance Advisory",
+  ctaSub: "Helping small law firms adopt AI responsibly",
+  footer: "This assessment is prepared by JDAI Consultants, LLC. It identifies areas of potential risk based on publicly available tool information and your responses. It is not legal advice and does not create an attorney-client relationship. Results should be reviewed with a qualified legal AI advisor before taking action. JDAI Consultants, LLC · Dzissman@jdaiconsultants.com · ai-readiness.jdaiconsultants.com",
+};
+
+// ─── COLORS ───────────────────────────────────────────────────────────────────
+const C = {
+  navy:"#0b0f1a", navyMid:"#121828", navyCard:"#161d2e", border:"#1e2a40",
+  gold:"#c9a84c", goldLt:"#e8c97a", textPri:"#e8e4dc", textMut:"#8a9ab8",
+  textDim:"#4a5a78", blue:"#3a6ea8",
+  green:"#2d6a4f",  greenBg:"#052e16",  greenBd:"#2d6a4f55",
+  amber:"#b45309",  amberBg:"#1a0e00",  amberBd:"#b4530955",
+  red:"#9b1c1c",    redBg:"#1f0505",    redBd:"#9b1c1c55",
+  blue2:"#1e3a5f",  blue2Bg:"#0d1f30",  blue2Bd:"#3a6ea855",
+};
+
+const TIER_COLOR = { 1:"#1e3a5f", 2:"#1a3d2a", 3:"#3d2a00", 4:"#3d1010" };
+const GRADE_COLOR = { A:"#4ade80", B:C.green, C:C.amber, D:"#f97316", F:C.red };
+const GRADE_BG    = { A:"#052e16", B:"#021a0e", C:C.amberBg, D:"#1a0800", F:C.redBg };
+const GRADE_BD    = { A:"#16a34a55", B:C.greenBd, C:C.amberBd, D:"#c2410c55", F:C.redBd };
+
+const PRACTICE_AREAS = [
+  "Personal Injury","Family Law","Estate Planning","Real Estate",
+  "Criminal Defense","Business / Transactional","Immigration",
+  "Employment","General Practice","Bankruptcy","Intellectual Property","Other"
+];
+const FIRM_SIZES = ["Solo (1 attorney)","2–5 attorneys","6–10 attorneys"];
+
+// ─── GRADING (internal — not shown to client) ─────────────────────────────────
+function grade(t) {
+  if (t.tier === 4) return "F";
+  if (t.tier === 3) return t.dataRisk === "Exposed" ? "F" : "D";
+  if (t.tier === 2) {
+    if (t.dataRisk === "Exposed") return "D";
+    if (t.dataRisk === "Protected" && t.ethics === "Engaged") return "B";
+    if (t.dataRisk === "Protected") return "C";
+    return "D";
+  }
+  if (t.dataRisk === "Protected" && t.ethics === "Engaged") return "A";
+  if (t.dataRisk === "Protected" && t.hasDPA) return "B";
+  return "C";
+}
+
+// ─── TOOL DATABASE ────────────────────────────────────────────────────────────
+const RAW_TOOLS = [
+  // TIER 1 — RESEARCH
+  { id:"wl",  tier:1, name:"Westlaw Precision / CoCounsel",        category:"Legal Research + Drafting",      dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"lx",  tier:1, name:"Lexis+ AI (w/ Protégé)",               category:"Legal Research",                 dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"blw", tier:1, name:"Bloomberg Law AI",                      category:"Legal Research",                 dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"lg",  tier:1, name:"LegesGPT",                              category:"Legal Research",                 dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — PRACTICE MANAGEMENT
+  { id:"cl",  tier:1, name:"Clio Manage AI",                        category:"Practice Management",            dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"sb",  tier:1, name:"Smokeball + Archie AI",                 category:"Practice Mgmt + Drafting",       dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"mc",  tier:1, name:"MyCase IQ",                             category:"Practice Management",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"cr",  tier:1, name:"CARET Legal",                           category:"Practice Management",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — INTAKE & CRM
+  { id:"lm",  tier:1, name:"Lawmatics",                             category:"CRM + Intake Automation",        dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"sm",  tier:1, name:"Smith.ai",                              category:"Virtual Receptionist + Intake",  dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"gd",  tier:1, name:"Gideon",                                category:"Client Intake + Chatbot",        dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — DOCUMENT AUTOMATION
+  { id:"gv",  tier:1, name:"Gavel (formerly Documate)",             category:"Document Automation",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"ld",  tier:1, name:"LawDroid Copilot",                      category:"Document Automation + Chatbot",  dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — CONTRACT AI
+  { id:"sp",  tier:1, name:"Spellbook",                             category:"Contract Drafting/Review",       dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"cb",  tier:1, name:"ClauseBase",                            category:"Contract Drafting",              dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"di",  tier:1, name:"Diligen",                               category:"Contract Review",                dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"ki",  tier:1, name:"Kira Systems (Litera / Lito)",          category:"Contract Review + Due Diligence",dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"lu",  tier:1, name:"Luminance",                             category:"Contract AI",                    dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"ir",  tier:1, name:"Ironclad",                              category:"Contract Lifecycle Mgmt",        dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — LITIGATION
+  { id:"ev",  tier:1, name:"Everlaw AI",                            category:"eDiscovery + Litigation",        dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"re",  tier:1, name:"Relativity / RelativityOne aiR",        category:"eDiscovery",                     dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"bp",  tier:1, name:"Briefpoint",                            category:"Litigation Drafting",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"lxm", tier:1, name:"Lex Machina",                           category:"Litigation Analytics",           dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"trx", tier:1, name:"Trellis",                               category:"Litigation Analytics",           dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  // TIER 1 — PI / SPECIALTY
+  { id:"eu",  tier:1, name:"EvenUp (Eve)",                          category:"PI Demand Automation",           dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"su",  tier:1, name:"Supio",                                 category:"PI Case Intelligence",           dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  // TIER 1 — MISC
+  { id:"nlm", tier:1, name:"Google NotebookLM",                     category:"Research / Document Analysis",   dataRisk:"Limited",    ethics:"Silent",  hasDPA:false },
+  // TIER 2
+  { id:"gp2", tier:2, name:"ChatGPT (Enterprise / Team)",           category:"General AI",                     dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"gp1", tier:2, name:"ChatGPT (Free / Plus)",                 category:"General AI",                     dataRisk:"Exposed",    ethics:"Silent",  hasDPA:false },
+  { id:"cl2", tier:2, name:"Claude — Enterprise (Anthropic)",       category:"General AI",                     dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"cl1", tier:2, name:"Claude — Consumer / Pro",               category:"General AI",                     dataRisk:"Limited",    ethics:"Silent",  hasDPA:false },
+  { id:"cp2", tier:2, name:"Microsoft Copilot for M365 (Ent.)",     category:"General AI — Office",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"cp1", tier:2, name:"Microsoft Copilot (Consumer)",          category:"General AI",                     dataRisk:"Limited",    ethics:"Silent",  hasDPA:false },
+  { id:"gm2", tier:2, name:"Google Gemini (Workspace Enterprise)",  category:"General AI — Office",            dataRisk:"Protected",  ethics:"Limited", hasDPA:true  },
+  { id:"gm1", tier:2, name:"Google Gemini (Personal Account)",      category:"General AI",                     dataRisk:"Exposed",    ethics:"Silent",  hasDPA:false },
+  { id:"hv",  tier:2, name:"Harvey AI",                             category:"General AI — Legal Focused",     dataRisk:"Protected",  ethics:"Engaged", hasDPA:true  },
+  { id:"px",  tier:2, name:"Perplexity AI",                         category:"General AI — Web Research",      dataRisk:"Limited",    ethics:"Silent",  hasDPA:false },
+  { id:"sn",  tier:2, name:"Seenapse",                              category:"General AI — Ideation",          dataRisk:"Limited",    ethics:"Silent",  hasDPA:false },
+  // TIER 3
+  { id:"lz",  tier:3, name:"LegalZoom AI / Rocket Lawyer AI",       category:"Consumer Legal AI",              dataRisk:"Unverified", ethics:"Silent",  hasDPA:false },
+  { id:"cm",  tier:3, name:"CaseMine",                              category:"Consumer Legal Research",        dataRisk:"Unverified", ethics:"Silent",  hasDPA:false },
+  { id:"tw",  tier:3, name:"ThoughtRiver",                          category:"Contract Pre-Screening",         dataRisk:"Unverified", ethics:"Silent",  hasDPA:false },
+  // TIER 4
+  { id:"dn",  tier:4, name:"DoNotPay",                              category:"FTC Enforcement Action",         dataRisk:"Exposed",    ethics:"Silent",  hasDPA:false },
+];
+const TOOLS = RAW_TOOLS.map(t => ({ ...t, grade: grade(t) }));
+
+// ─── SCORECARD LOGIC ──────────────────────────────────────────────────────────
+function buildScorecard(tools, gov) {
+  const dist = { A:0, B:0, C:0, D:0, F:0 };
+  tools.forEach(t => dist[t.grade]++);
+
+  const gaps = [];
+  if (tools.some(t => t.dataRisk === "Exposed"))
+    gaps.push({ area:"Data Confidentiality", severity:"CRITICAL", summary:"One or more tools in your stack present immediate client data exposure risk. This requires attention before your next client intake." });
+  else if (tools.some(t => !t.hasDPA && t.dataRisk !== "Protected"))
+    gaps.push({ area:"Data Confidentiality", severity:"HIGH", summary:"Some tools lack confirmed data protection agreements. Client data should not enter these tools until this is resolved." });
+  if (tools.some(t => t.tier === 4))
+    gaps.push({ area:"Tool Classification", severity:"CRITICAL", summary:"Your stack includes a tool subject to FTC enforcement action. Immediate review is required." });
+  else if (tools.some(t => t.tier === 3))
+    gaps.push({ area:"Tool Classification", severity:"HIGH", summary:"Your stack includes tools that lack the professional-grade safeguards required for attorney use." });
+  if (tools.some(t => t.tier >= 3 && (t.category.includes("Research") || t.category.includes("Legal"))))
+    gaps.push({ area:"Legal Research Integrity", severity:"CRITICAL", summary:"One or more tools being used for legal research lack the citation verification required under attorney competence standards." });
+  if (tools.some(t => t.ethics === "Silent" && t.tier <= 2))
+    gaps.push({ area:"Supervision & Oversight", severity:"MEDIUM", summary:"Some tools show no engagement with bar ethics requirements. A documented supervision protocol is needed." });
+  if (gov.hasPolicy === "no")
+    gaps.push({ area:"Governance Policy", severity:"HIGH", summary:"No written AI governance policy is in place. This is required under ABA Opinion 512." });
+  else if (gov.hasPolicy === "partial")
+    gaps.push({ area:"Governance Policy", severity:"MEDIUM", summary:"An AI governance policy is in progress. Formalizing it reduces your exposure." });
+  if (gov.hasDPA === "no")
+    gaps.push({ area:"Data Protection Agreements", severity:"HIGH", summary:"No Data Processing Agreements have been executed. This creates confidentiality exposure for any client data entered into AI tools." });
+  else if (gov.hasDPA === "partial")
+    gaps.push({ area:"Data Protection Agreements", severity:"MEDIUM", summary:"DPA coverage is incomplete. Tools without confirmed agreements cannot be used for client matter work." });
+  if (gov.hasTrained === "no")
+    gaps.push({ area:"Staff Training", severity:"MEDIUM", summary:"Staff AI training is not documented. The supervising attorney is responsible for staff AI use under professional conduct rules." });
+  else if (gov.hasTrained === "partial")
+    gaps.push({ area:"Staff Training", severity:"MEDIUM", summary:"Staff training is informal. Formalizing and documenting it reduces supervision exposure." });
+  if (gov.hasEngagementLetter === "no")
+    gaps.push({ area:"Client Disclosure", severity:"MEDIUM", summary:"Engagement letters do not include AI disclosure language. Client notification is contemplated when AI materially affects a matter." });
+  else if (gov.hasEngagementLetter === "partial")
+    gaps.push({ area:"Client Disclosure", severity:"MEDIUM", summary:"AI disclosure language is under review. Finalizing it completes your client communication obligations." });
+
+  const hasCritical = gaps.some(g => g.severity === "CRITICAL");
+  const hasHigh     = gaps.some(g => g.severity === "HIGH");
+  const urgency     = hasCritical ? "ACT NOW" : hasHigh ? "ACT SOON" : gaps.length > 0 ? "REVIEW RECOMMENDED" : "MAINTAIN";
+  const urgencyColor = hasCritical ? C.red   : hasHigh ? C.amber   : gaps.length > 0 ? C.blue   : C.green;
+  const urgencyBg    = hasCritical ? C.redBg : hasHigh ? C.amberBg : gaps.length > 0 ? C.blue2Bg: C.greenBg;
+  const urgencyBd    = hasCritical ? C.redBd : hasHigh ? C.amberBd : gaps.length > 0 ? C.blue2Bd: C.greenBd;
+  const urgencyDesc  = hasCritical
+    ? "Critical risks identified. Your current AI stack creates immediate ethics exposure. Professional review is required before your next client matter."
+    : hasHigh
+    ? "Significant gaps identified. A structured review with an advisor will help you resolve these efficiently and build a defensible governance posture."
+    : gaps.length > 0
+    ? "Moderate gaps identified. Your foundation is workable but has areas that would benefit from professional review and documentation."
+    : "No immediate issues identified. Maintaining your posture requires ongoing review as tools, terms, and bar guidance continue to evolve.";
+
+  return { dist, gaps, urgency, urgencyColor, urgencyBg, urgencyBd, urgencyDesc, totalTools: tools.length };
+}
+
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+const badge = (fg,bg,bd) => ({
+  background:bg, color:fg, border:`1px solid ${bd}`, borderRadius:"3px",
+  padding:"2px 8px", fontSize:"10px", fontWeight:"700", letterSpacing:"0.06em",
+  fontFamily:"'Courier New', monospace", display:"inline-block", whiteSpace:"nowrap"
+});
+const S = {
+  app:   { background:C.navy, minHeight:"100vh", fontFamily:"Georgia, serif", color:C.textPri },
+  hdr:   { background:C.navyMid, borderBottom:`1px solid ${C.border}`, padding:"14px 24px", position:"sticky", top:0, zIndex:100 },
+  logo:  { fontSize:"13px", fontFamily:"'Courier New', monospace", color:C.gold, letterSpacing:"0.15em", textTransform:"uppercase" },
+  sub:   { fontSize:"10px", color:C.textMut, letterSpacing:"0.1em", textTransform:"uppercase", marginTop:"2px", fontFamily:"'Courier New', monospace" },
+  main:  { padding:"20px 24px", maxWidth:"680px", margin:"0 auto" },
+  lbl:   { fontSize:"10px", color:C.textDim, textTransform:"uppercase", letterSpacing:"0.1em", fontFamily:"'Courier New', monospace", marginBottom:"5px", display:"block" },
+  inp:   { background:C.navyCard, border:`1px solid ${C.border}`, borderRadius:"4px", padding:"9px 13px", fontSize:"14px", color:C.textPri, width:"100%", outline:"none", fontFamily:"Georgia, serif" },
+  sel:   { background:C.navyCard, border:`1px solid ${C.border}`, borderRadius:"4px", padding:"9px 13px", fontSize:"14px", color:C.textPri, width:"100%", outline:"none", fontFamily:"Georgia, serif" },
+  card:  { background:C.navyCard, border:`1px solid ${C.border}`, borderRadius:"6px", padding:"18px 20px", marginBottom:"14px" },
+  btn:   { background:C.gold, color:C.navy, border:"none", borderRadius:"4px", padding:"11px 22px", fontSize:"13px", fontWeight:"700", cursor:"pointer", letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:"'Courier New', monospace" },
+  btnSm: { background:"transparent", color:C.gold, border:`1px solid ${C.gold}44`, borderRadius:"3px", padding:"6px 14px", fontSize:"11px", cursor:"pointer", fontFamily:"'Courier New', monospace" },
+  btnDel:{ background:"transparent", color:"#f87171", border:"none", padding:"3px 8px", fontSize:"13px", cursor:"pointer" },
+  shdr:  { fontSize:"11px", color:C.gold, letterSpacing:"0.15em", textTransform:"uppercase", fontFamily:"'Courier New', monospace", fontWeight:"700", marginBottom:"14px", paddingBottom:"8px", borderBottom:`1px solid ${C.border}` },
+  err:   { fontSize:"11px", color:"#fca5a5", fontFamily:"'Courier New', monospace", marginTop:"6px" },
+  sev:   { CRITICAL:{c:C.red,bg:C.redBg,bd:C.redBd}, HIGH:{c:C.amber,bg:C.amberBg,bd:C.amberBd}, MEDIUM:{c:C.blue,bg:C.blue2Bg,bd:C.blue2Bd} },
+};
+
+// ─── PROGRESS BAR ─────────────────────────────────────────────────────────────
+function ProgressBar({ step }) {
+  const steps = ["Firm Info","Governance","Your Tools","Results"];
+  return (
+    <div style={{display:"flex",gap:"4px",marginBottom:"20px",marginTop:"4px"}}>
+      {steps.map((s,i) => (
+        <div key={i} style={{flex:1,textAlign:"center"}}>
+          <div style={{height:"3px",background:i<step?C.gold:C.border,borderRadius:"2px",marginBottom:"4px",transition:"background 0.3s"}}/>
+          <div style={{fontSize:"9px",color:i<step?C.gold:C.textDim,fontFamily:"'Courier New', monospace",letterSpacing:"0.06em",textTransform:"uppercase"}}>{s}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [step,      setStep]      = useState(1);
+  const [firm,      setFirm]      = useState({ name:"", email:"", practiceArea:"", firmSize:"" });
+  const [gov,       setGov]       = useState({ hasPolicy:null, hasDPA:null, hasTrained:null, hasEngagementLetter:null });
+  const [selIds,    setSelIds]    = useState(new Set());
+  const [q,         setQ]         = useState("");
+  const [cName,     setCName]     = useState("");
+  const [cTools,    setCTools]    = useState([]);
+  const [errors,    setErrors]    = useState({});
+  const [submitting,setSubmitting]= useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitErr, setSubmitErr] = useState("");
+
+  const selected = useMemo(() => [...TOOLS.filter(t=>selIds.has(t.id)), ...cTools], [selIds, cTools]);
+  const filtered = useMemo(() => {
+    const lq = q.toLowerCase();
+    return q ? TOOLS.filter(t=>t.name.toLowerCase().includes(lq)||t.category.toLowerCase().includes(lq)) : TOOLS;
+  }, [q]);
+
+  const toggle = id => setSelIds(p=>{ const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; });
+  const addCustom = () => {
+    if (!cName.trim()) return;
+    const raw = { id:"c_"+Date.now(), tier:3, name:cName.trim(), category:"Unverified / Custom", dataRisk:"Unverified", ethics:"Silent", hasDPA:false };
+    setCTools(p=>[...p,{...raw,grade:grade(raw)}]);
+    setCName("");
+  };
+
+  const scorecard = useMemo(() => step===4 ? buildScorecard(selected, gov) : null, [selected, gov, step]);
+
+  // Validate Step 1
+  const validateStep1 = () => {
+    const e = {};
+    if (!firm.name.trim())  e.name  = "Firm or attorney name is required.";
+    if (!firm.email.trim()) e.email = "Email address is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(firm.email)) e.email = "Please enter a valid email address.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  // Formspree submission
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitErr("");
+    const sc = buildScorecard(selected, gov);
+
+    const payload = {
+      _subject: `New AI Assessment — ${firm.name} [${sc.urgency}]`,
+      firm_name:       firm.name,
+      email:           firm.email,
+      practice_area:   firm.practiceArea || "Not provided",
+      firm_size:       firm.firmSize     || "Not provided",
+      urgency:         sc.urgency,
+      urgency_desc:    sc.urgencyDesc,
+      tools_count:     String(sc.totalTools),
+      tools_list:      selected.map(t=>`${t.name} (Tier ${t.tier} | ${t.dataRisk} | Grade: ${t.grade})`).join(", "),
+      grade_dist:      Object.entries(sc.dist).filter(([,v])=>v>0).map(([k,v])=>`${k}:${v}`).join(" / "),
+      gap_count:       String(sc.gaps.length),
+      gaps:            sc.gaps.map(g=>`[${g.severity}] ${g.area}: ${g.summary}`).join(" | "),
+      gov_policy:      gov.hasPolicy           || "not answered",
+      gov_dpa:         gov.hasDPA              || "not answered",
+      gov_training:    gov.hasTrained          || "not answered",
+      gov_eng_letter:  gov.hasEngagementLetter || "not answered",
+      submitted_at:    new Date().toLocaleString(),
+    };
+
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        const data = await res.json();
+        setSubmitErr(data?.errors?.[0]?.message || "Submission failed. Please email us directly.");
+      }
+    } catch {
+      setSubmitErr("Network error. Please email us directly at Dzissman@jdaiconsultants.com");
+    }
+    setSubmitting(false);
+  };
+
+  // ── STEP 1 — FIRM INFO ────────────────────────────────────────────────────
+  if (step === 1) return (
+    <div style={S.app}>
+      <style>{`*{box-sizing:border-box} body{margin:0} input:focus,select:focus{border-color:${C.gold}88!important;outline:none} button:hover{opacity:.85} ::placeholder{color:${C.textDim}}`}</style>
+      <div style={S.hdr}><div style={S.logo}>{BRAND.name}</div><div style={S.sub}>{BRAND.sub}</div></div>
+      <div style={S.main}>
+        <ProgressBar step={1}/>
+        <div style={{...S.card,maxWidth:"520px",margin:"0 auto"}}>
+          <div style={S.shdr}>Step 1 of 4 — About Your Firm</div>
+          <p style={{fontSize:"13px",color:C.textMut,marginTop:0,marginBottom:"20px",lineHeight:"1.7"}}>
+            This assessment takes about 3 minutes. Your answers generate your results. If you choose to submit at the end, a summary is sent to a JDAI Consultants advisor who will follow up. Nothing is transmitted until you click Submit.
+          </p>
+
+          <div style={{marginBottom:"14px"}}>
+            <label style={S.lbl}>Firm or Attorney Name <span style={{color:C.red}}>*</span></label>
+            <input style={{...S.inp,borderColor:errors.name?C.red:C.border}} placeholder="e.g. Smith & Associates, P.A." value={firm.name} onChange={e=>{setFirm(p=>({...p,name:e.target.value}));setErrors(p=>({...p,name:""}));}}/>
+            {errors.name && <div style={S.err}>{errors.name}</div>}
+          </div>
+
+          <div style={{marginBottom:"14px"}}>
+            <label style={S.lbl}>Email Address <span style={{color:C.red}}>*</span></label>
+            <input style={{...S.inp,borderColor:errors.email?C.red:C.border}} placeholder="e.g. jane@smithlaw.com" value={firm.email} onChange={e=>{setFirm(p=>({...p,email:e.target.value}));setErrors(p=>({...p,email:""}));}}/>
+            {errors.email && <div style={S.err}>{errors.email}</div>}
+          </div>
+
+          <div style={{marginBottom:"14px"}}>
+            <label style={S.lbl}>Primary Practice Area <span style={{color:C.textDim,fontSize:"9px"}}>(optional)</span></label>
+            <select style={S.sel} value={firm.practiceArea} onChange={e=>setFirm(p=>({...p,practiceArea:e.target.value}))}>
+              <option value="">Select...</option>
+              {PRACTICE_AREAS.map(a=><option key={a}>{a}</option>)}
+            </select>
+          </div>
+
+          <div style={{marginBottom:"24px"}}>
+            <label style={S.lbl}>Firm Size <span style={{color:C.textDim,fontSize:"9px"}}>(optional)</span></label>
+            <select style={S.sel} value={firm.firmSize} onChange={e=>setFirm(p=>({...p,firmSize:e.target.value}))}>
+              <option value="">Select...</option>
+              {FIRM_SIZES.map(s=><option key={s}>{s}</option>)}
+            </select>
+          </div>
+
+          <div style={{display:"flex",justifyContent:"flex-end"}}>
+            <button style={S.btn} onClick={()=>{ if(validateStep1()) setStep(2); }}>Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── STEP 2 — GOVERNANCE ───────────────────────────────────────────────────
+  if (step === 2) {
+    const GQ = [
+      { key:"hasPolicy",           label:"Does your firm have a written AI governance policy?",              yes:"Yes — written and in use", no:"No",            partial:"In progress" },
+      { key:"hasDPA",              label:"Have you signed a Data Processing Agreement with any AI tools?",    yes:"Yes — at least one",       no:"No / Not sure", partial:"Some, not all" },
+      { key:"hasTrained",          label:"Has your staff received training on AI use rules?",                 yes:"Yes — documented",          no:"No",            partial:"Informal only" },
+      { key:"hasEngagementLetter", label:"Do your engagement letters include AI disclosure language?",         yes:"Yes — updated",             no:"No",            partial:"Under review" },
+    ];
+    return (
+      <div style={S.app}>
+        <style>{`*{box-sizing:border-box} body{margin:0} button:hover{opacity:.85}`}</style>
+        <div style={S.hdr}><div style={S.logo}>{BRAND.name}</div><div style={S.sub}>Step 2 of 4 — Governance Baseline</div></div>
+        <div style={S.main}>
+          <ProgressBar step={2}/>
+          <div style={{...S.card,maxWidth:"520px",margin:"0 auto"}}>
+            <div style={S.shdr}>4 Quick Questions</div>
+            <p style={{fontSize:"13px",color:C.textMut,marginTop:0,marginBottom:"18px",lineHeight:"1.7"}}>These questions help identify where your firm's AI governance stands today.</p>
+            {GQ.map(({key,label,yes,no,partial})=>(
+              <div key={key} style={{marginBottom:"18px",paddingBottom:"18px",borderBottom:`1px solid ${C.border}33`}}>
+                <div style={{fontSize:"13px",color:C.textPri,marginBottom:"10px",lineHeight:"1.5"}}>{label}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
+                  {[[yes,"yes",C.green,C.greenBg,C.greenBd],[no,"no",C.red,C.redBg,C.redBd],[partial,"partial",C.amber,C.amberBg,C.amberBd]].map(([lbl,val,col,bg,bd])=>{
+                    const sel=gov[key]===val;
+                    return (
+                      <div key={val} onClick={()=>setGov(p=>({...p,[key]:val}))} style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 14px",background:sel?bg:C.navyCard,border:`1px solid ${sel?bd:C.border}`,borderRadius:"4px",cursor:"pointer",transition:"all 0.15s"}}>
+                        <div style={{width:"15px",height:"15px",borderRadius:"50%",border:`2px solid ${sel?col:C.border}`,background:sel?col:"transparent",flexShrink:0}}/>
+                        <span style={{fontSize:"13px",color:sel?C.textPri:C.textMut}}>{lbl}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"6px"}}>
+              <button style={S.btnSm} onClick={()=>setStep(1)}>← Back</button>
+              <button style={S.btn} onClick={()=>setStep(3)}>Next: Your Tools →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STEP 3 — TOOL SELECTION ───────────────────────────────────────────────
+  if (step === 3) {
+    const TIER_LABEL = { 1:"Purpose-Built Legal AI", 2:"General AI Tools", 3:"Other / Unverified", 4:"Flagged Tools" };
+    const byTier = [1,2,3,4].map(t=>({ t, tools:filtered.filter(x=>x.tier===t) }));
+    return (
+      <div style={S.app}>
+        <style>{`*{box-sizing:border-box} body{margin:0} ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:${C.navy}} ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px} button:hover{opacity:.85}`}</style>
+        <div style={S.hdr}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"8px"}}>
+            <div><div style={S.logo}>{BRAND.name}</div><div style={S.sub}>Step 3 of 4 — Tools Your Firm Uses</div></div>
+            <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
+              <span style={{fontSize:"11px",color:C.textMut,fontFamily:"'Courier New', monospace"}}>{selected.length} selected</span>
+              <button style={S.btnSm} onClick={()=>setStep(2)}>← Back</button>
+              <button style={{...S.btn,opacity:selected.length===0?0.5:1}} disabled={selected.length===0} onClick={()=>setStep(4)}>See Results →</button>
+            </div>
+          </div>
+        </div>
+        <div style={S.main}>
+          <ProgressBar step={3}/>
+          <input style={{...S.inp,marginBottom:"10px"}} placeholder="Search tools by name..." value={q} onChange={e=>setQ(e.target.value)}/>
+
+          <div style={{marginBottom:"14px"}}>
+            <div style={{fontSize:"11px",color:C.textDim,marginBottom:"6px",lineHeight:"1.5"}}>
+              Don't see a tool you use? Add it below — anything you add is included in your results.
+            </div>
+            <div style={{display:"flex",gap:"8px"}}>
+              <input style={{...S.inp,flex:1}} placeholder="Enter tool name..." value={cName} onChange={e=>setCName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addCustom()}/>
+              <button style={S.btnSm} onClick={addCustom}>+ Add</button>
+            </div>
+          </div>
+
+          {cTools.length>0&&(
+            <div style={{...S.card,borderColor:C.amberBd,marginBottom:"14px"}}>
+              <div style={{...S.lbl,color:C.amber,marginBottom:"8px"}}>Tools You Added</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                {cTools.map(t=>(
+                  <div key={t.id} style={{background:C.amberBg,border:`1px solid ${C.amberBd}`,borderRadius:"4px",padding:"5px 10px",fontSize:"12px",color:C.textPri,display:"flex",alignItems:"center",gap:"6px"}}>
+                    {t.name}<button style={S.btnDel} onClick={()=>setCTools(p=>p.filter(x=>x.id!==t.id))}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {byTier.map(({t,tools:tt})=>{
+            if (!tt.length) return null;
+            const sc = tt.filter(x=>selIds.has(x.id)).length;
+            return (
+              <div key={t} style={{marginBottom:"14px"}}>
+                <div style={{background:TIER_COLOR[t],borderRadius:"4px 4px 0 0",padding:"8px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:"11px",color:C.goldLt,fontFamily:"'Courier New', monospace",letterSpacing:"0.08em"}}>{TIER_LABEL[t]}</span>
+                  {sc>0&&<span style={{fontSize:"10px",color:C.gold,fontFamily:"'Courier New', monospace"}}>{sc} selected</span>}
+                </div>
+                <div style={{border:`1px solid ${C.border}`,borderTop:"none",borderRadius:"0 0 4px 4px",overflow:"hidden"}}>
+                  {tt.map((tool,i)=>{
+                    const sel=selIds.has(tool.id);
+                    return (
+                      <div key={tool.id} onClick={()=>toggle(tool.id)} style={{display:"flex",alignItems:"flex-start",gap:"10px",padding:"11px 14px",background:sel?"#1e2a4033":i%2===0?C.navyCard:C.navyMid,borderLeft:sel?`3px solid ${C.gold}`:"3px solid transparent",cursor:"pointer",borderBottom:i<tt.length-1?`1px solid ${C.border}22`:"none",transition:"all 0.1s"}}>
+                        <div style={{width:"17px",height:"17px",border:`1px solid ${sel?C.gold:C.border}`,borderRadius:"3px",background:sel?C.gold:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"2px"}}>
+                          {sel&&<span style={{color:C.navy,fontSize:"10px",fontWeight:"900"}}>✓</span>}
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:"13px",color:sel?C.textPri:C.textMut,fontWeight:sel?"600":"400"}}>{tool.name}</div>
+                          <div style={{fontSize:"10px",color:C.textDim,fontFamily:"'Courier New', monospace",marginTop:"2px"}}>{tool.category}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          <div style={{display:"flex",justifyContent:"flex-end",marginTop:"8px",paddingBottom:"32px"}}>
+            <button style={{...S.btn,opacity:selected.length===0?0.5:1}} disabled={selected.length===0} onClick={()=>setStep(4)}>
+              See My Results ({selected.length} tool{selected.length!==1?"s":""}) →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── STEP 4 — RESULTS ──────────────────────────────────────────────────────
+  const sc = scorecard;
+  return (
+    <div style={S.app}>
+      <style>{`*{box-sizing:border-box} body{margin:0} ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:${C.navy}} ::-webkit-scrollbar-thumb{background:${C.border};border-radius:3px} button:hover{opacity:.85} a{color:${C.gold}} @media print{.np{display:none!important}}`}</style>
+      <div style={{...S.hdr,background:C.navyMid}} className="np">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div><div style={S.logo}>{BRAND.name}</div><div style={S.sub}>Your AI Readiness Results</div></div>
+          <button style={S.btnSm} onClick={()=>setStep(3)}>← Edit Tools</button>
+        </div>
+      </div>
+
+      <div style={S.main}>
+        <ProgressBar step={4}/>
+
+        {/* HEADER */}
+        <div style={{marginBottom:"16px"}}>
+          <div style={{fontSize:"19px",fontWeight:"600",color:C.textPri}}>{firm.name} — AI Readiness Assessment</div>
+          <div style={{fontSize:"11px",color:C.textDim,fontFamily:"'Courier New', monospace",marginTop:"3px"}}>
+            {[firm.practiceArea,firm.firmSize].filter(Boolean).join(" · ")}{(firm.practiceArea||firm.firmSize)?" · ":""}{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
+          </div>
+        </div>
+
+        {/* URGENCY BANNER */}
+        <div style={{background:sc.urgencyBg,border:`1px solid ${sc.urgencyBd}`,borderRadius:"6px",padding:"18px 20px",marginBottom:"14px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"10px",flexWrap:"wrap"}}>
+            <span style={{fontSize:"22px",fontWeight:"800",color:sc.urgencyColor,fontFamily:"'Courier New', monospace",letterSpacing:"0.1em"}}>{sc.urgency}</span>
+            <span style={{fontSize:"12px",color:C.textMut}}>based on {sc.totalTools} tool{sc.totalTools!==1?"s":""} and your governance answers</span>
+          </div>
+          <div style={{fontSize:"13px",color:C.textPri,lineHeight:"1.7"}}>{sc.urgencyDesc}</div>
+        </div>
+
+        {/* GRADE DISTRIBUTION */}
+        <div style={S.card}>
+          <div style={S.shdr}>Tool Risk Distribution — {sc.totalTools} Tools Assessed</div>
+          <p style={{fontSize:"12px",color:C.textMut,marginTop:0,marginBottom:"14px",lineHeight:"1.6"}}>
+            Tools are evaluated against a four-factor framework: data confidentiality, ethics engagement, practice area fit, and cost accessibility. The distribution below shows how your stack grades out overall. Individual tool details are reviewed during your consultation.
+          </p>
+          <div style={{display:"flex",gap:"8px",flexWrap:"wrap",marginBottom:"14px"}}>
+            {["A","B","C","D","F"].map(g => sc.dist[g] > 0 && (
+              <div key={g} style={{background:GRADE_BG[g],border:`1px solid ${GRADE_BD[g]}`,borderRadius:"6px",padding:"12px 18px",textAlign:"center",minWidth:"64px"}}>
+                <div style={{fontSize:"26px",fontWeight:"800",color:GRADE_COLOR[g],fontFamily:"'Courier New', monospace"}}>{sc.dist[g]}</div>
+                <span style={badge(GRADE_COLOR[g],GRADE_BG[g],GRADE_BD[g])}>{g}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:"11px",color:C.textDim,fontFamily:"'Courier New', monospace",background:C.navy,borderRadius:"4px",padding:"9px 12px",lineHeight:"1.7"}}>
+            A = Strong on all factors · B = Strong with minor gap · C = Acceptable with governance in place · D = Gaps requiring remediation · F = Do not use for client matters
+          </div>
+        </div>
+
+        {/* GAP AREAS */}
+        <div style={S.card}>
+          <div style={S.shdr}>Areas Requiring Attention — {sc.gaps.length} Identified</div>
+          {sc.gaps.length === 0 ? (
+            <div style={{background:C.greenBg,border:`1px solid ${C.greenBd}`,borderRadius:"5px",padding:"14px 16px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"}}>
+                <span style={badge(C.green,C.greenBg,C.greenBd)}>CLEAR</span>
+                <span style={{fontSize:"13px",fontWeight:"700",color:C.textPri}}>No Immediate Gaps Identified</span>
+              </div>
+              <div style={{fontSize:"12px",color:C.textMut,lineHeight:"1.6"}}>Your current tool stack and governance posture have no immediate red flags. A consultation can confirm this picture and set up ongoing monitoring as the market evolves.</div>
+            </div>
+          ) : sc.gaps.map((g,i)=>{
+            const sv = S.sev[g.severity] || S.sev.MEDIUM;
+            return (
+              <div key={i} style={{background:sv.bg,border:`1px solid ${sv.bd}`,borderRadius:"5px",padding:"13px 16px",marginBottom:"9px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px",flexWrap:"wrap"}}>
+                  <span style={badge(sv.c,sv.bg,sv.bd)}>{g.severity}</span>
+                  <span style={{fontSize:"13px",fontWeight:"700",color:C.textPri}}>{g.area}</span>
+                </div>
+                <div style={{fontSize:"12px",color:C.textMut,lineHeight:"1.6"}}>{g.summary}</div>
+                <div style={{marginTop:"8px",fontSize:"11px",color:sv.c,fontFamily:"'Courier New', monospace"}}>→ Discuss remediation steps with your JDAI Consultants advisor</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* WHAT HAPPENS NEXT */}
+        <div style={S.card}>
+          <div style={S.shdr}>What Happens Next</div>
+          <div style={{fontSize:"13px",color:C.textMut,lineHeight:"1.8"}}>
+            {sc.urgency==="ACT NOW"            && <p style={{margin:"0 0 10px",color:C.textPri}}>Based on your results, some of your current tools require immediate attention. The gaps identified above create real ethics exposure — a consultation will give you a clear, prioritized remediation plan.</p>}
+            {sc.urgency==="ACT SOON"           && <p style={{margin:"0 0 10px",color:C.textPri}}>Your results show significant gaps that are manageable with the right approach. A structured consultation will give you a remediation plan and the documentation to support it.</p>}
+            {sc.urgency==="REVIEW RECOMMENDED" && <p style={{margin:"0 0 10px",color:C.textPri}}>Your foundation is workable. A consultation will help close remaining gaps, formalize your governance posture, and ensure you stay compliant as the market evolves.</p>}
+            {sc.urgency==="MAINTAIN"           && <p style={{margin:"0 0 10px",color:C.textPri}}>You're in good shape. A consultation can confirm this picture, identify any blind spots, and establish a review schedule that keeps you current.</p>}
+            <p style={{margin:"0 0 10px"}}>Legal AI is moving faster than almost any other technology sector. A tool that is appropriate today may shift with an acquisition, a data policy change, or a new bar ethics opinion. Staying current requires ongoing attention.</p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div style={{background:`linear-gradient(135deg, ${C.navyMid}, ${C.navy})`,border:`1px solid ${C.gold}44`,borderRadius:"8px",padding:"24px 22px",marginBottom:"14px",textAlign:"center"}}>
+          <div style={{fontSize:"16px",fontWeight:"600",color:C.gold,marginBottom:"6px",fontFamily:"'Courier New', monospace",letterSpacing:"0.08em"}}>{BRAND.cta}</div>
+          <div style={{fontSize:"12px",color:C.textMut,marginBottom:"20px"}}>{BRAND.ctaSub}</div>
+
+          {!submitted ? (
+            <>
+              <p style={{fontSize:"12px",color:C.textMut,marginBottom:"16px",lineHeight:"1.6",marginTop:0}}>
+                Submit your results and a JDAI Consultants advisor will review them and be in touch within one business day. Or reach out directly below.
+              </p>
+              <button
+                style={{...S.btn,width:"100%",padding:"13px",marginBottom:"10px",opacity:submitting?0.7:1}}
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? "Submitting…" : "Submit Results — Request a Consultation"}
+              </button>
+              {submitErr && <div style={{...S.err,textAlign:"center",marginBottom:"8px"}}>{submitErr}</div>}
+              <div style={{fontSize:"11px",color:C.textDim,marginBottom:"6px"}}>or contact us directly</div>
+              <a href={`mailto:Dzissman@jdaiconsultants.com?subject=AI Readiness Assessment — ${encodeURIComponent(firm.name)}`} style={{fontSize:"12px",fontFamily:"'Courier New', monospace",textDecoration:"none"}}>
+                Dzissman@jdaiconsultants.com
+              </a>
+            </>
+          ) : (
+            <div style={{background:C.greenBg,border:`1px solid ${C.greenBd}`,borderRadius:"6px",padding:"18px"}}>
+              <div style={{fontSize:"14px",color:"#6ee7b7",fontWeight:"600",marginBottom:"8px"}}>✓ Results Submitted</div>
+              <div style={{fontSize:"12px",color:C.textMut,lineHeight:"1.6",marginBottom:"12px"}}>
+                A JDAI Consultants advisor will review your assessment and be in touch within one business day. You can also reach us directly:
+              </div>
+              <a href={`mailto:Dzissman@jdaiconsultants.com?subject=AI Readiness Assessment — ${encodeURIComponent(firm.name)}`} style={{fontSize:"12px",fontFamily:"'Courier New', monospace",textDecoration:"none"}}>
+                Dzissman@jdaiconsultants.com
+              </a>
+              <div style={{marginTop:"16px",paddingTop:"14px",borderTop:"1px solid "+C.greenBd}}>
+                <a href="index.html" style={{fontSize:"12px",fontFamily:"'Courier New', monospace",color:C.gold,textDecoration:"none"}}>&#8592; Back to JDAI Consultants</a>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <div style={{borderTop:`1px solid ${C.border}`,paddingTop:"13px",marginTop:"6px",fontSize:"10px",color:C.textDim,fontFamily:"'Courier New', monospace",lineHeight:"1.9",paddingBottom:"32px"}}>
+          {BRAND.footer}
+          <div style={{marginTop:"12px"}}><a href="index.html" style={{color:C.gold,textDecoration:"none"}}>&#8592; Return to jdaiconsultants.com</a></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
